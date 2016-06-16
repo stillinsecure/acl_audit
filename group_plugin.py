@@ -12,6 +12,7 @@ class GroupPlugin(Plugin):
 
     def __init__(self):
         super(GroupPlugin, self).__init__()
+        self.current_group = None
 
     def get_list(self):
         """

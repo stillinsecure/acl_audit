@@ -1,6 +1,5 @@
 from flow_plugin import FlowPlugin
 from ghost import Ghost
-from netlib.odict import ODict
 
 import Cookie
 
@@ -17,9 +16,12 @@ class ACSFlowPlugin(FlowPlugin):
 
     def start_session(self):
 
+        print 'Login to {0} as {1}'.format(self.url, self.username)
         ACSFlowPlugin.fed_auth_cookies = []
+
         g = Ghost()
         with g.start() as session:
+            session.show()
             session.open(self.url)
             session.wait_for_selector('div.windows-live-label.unselectable.tappable')
             session.evaluate('windowsLiveSignin();', expect_loading=True)
@@ -33,14 +35,8 @@ class ACSFlowPlugin(FlowPlugin):
             for key in cookie:
                 tmp += '{0}={1}; '.format(key, cookie[key].value)
 
+            print 'Using FedAuth cookie: {0}\r\n'.format(tmp)
             ACSFlowPlugin.fed_auth_cookies.append(tmp)
-
-    def end_session(self):
-        pass
-
-    def remove_session(self, f):
-        f.request.cookies = ODict()
-        f.request.headers.pop('cookie')
 
     def request(self, f):
         f.request.headers.set_all('Cookie', ACSFlowPlugin.fed_auth_cookies)
