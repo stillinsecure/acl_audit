@@ -13,6 +13,8 @@ class RecordMaster(controller.Master):
 
     def __init__(self, hosts, replay_file, record_path_filter, record_content_type):
         self.hosts = hosts
+        if not os.path.exists('output'):
+            os.makedirs('output')
         replay_file = 'output/{0}'.format(replay_file)
         self.tmp_file = open(replay_file, 'wb')
         self.writer = flow.FlowWriter(self.tmp_file)
@@ -21,6 +23,7 @@ class RecordMaster(controller.Master):
 
         config = proxy.ProxyConfig(port=int(8080), http2=False)
         server = proxy.ProxyServer(config)
+        print 'Listening on {0}'.format(server.address)
         super(RecordMaster, self).__init__(server)
 
     def handle_response(self, f):
@@ -140,7 +143,9 @@ class AuditManager(object):
                              self.options.record_content_type)
 
             try:
-                print 'Starting to record flows'
+                print 'Filtering request URI with the regex {0}'.format(self.options.record_path_filter)
+                print 'Only accepting request/response based on content type matching the regex {0}'.format(self.options.record_content_type)
+                print 'Starting to record flows for the hosts {0}'.format(self.options.hosts)
                 m.run()
             except Exception as ex:
                 print 'Unexpected error has occurred: ', ex.args
