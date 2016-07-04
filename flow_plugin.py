@@ -33,12 +33,8 @@ class FlowPlugin(Plugin):
         return True
 
     def format_result(self, flow_result, group):
-        response = ''
-        if re.search('(html|json|xml)', flow_result.response):
-            response = re.sub('[\r,\n,\t]', '', flow_result.response)
-            return 'Status Code:{0:4} {1}'.format(flow_result.status_code, response)
-        else:
-            return 'Status Code:{0:4}'.format(flow_result.status_code)
+        response = re.sub('[\r,\n,\t]', '', flow_result.response)
+        return 'Status Code:{0:4} {1}'.format(flow_result.status_code, response)
 
     def remove_session(self, flow):
         flow.request.cookies = ODict()

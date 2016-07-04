@@ -250,9 +250,10 @@ class AuditManager(object):
                 for match_result in match_results:
                     col += 1
                     try:
-                        result_t = self.flow_plugin.format_result(match_result, match_result.report_col_name)
-                        if result_t is not None:
-                             worksheet.write(row, col, result_t)
+                        value = self.flow_plugin.format_result(match_result, match_result.report_col_name)
+                        if value is not None:
+                             value = value.decode('utf-8','ignore')
+                             worksheet.write(row, col, value)
                     except Exception as ex:
                         print 'Unexpected error formatting result: ', ex.args
                         continue
