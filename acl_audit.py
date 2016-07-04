@@ -8,7 +8,7 @@ parser.add_argument('--mode', help='Specify the mode for acl_audit', choices=['r
 parser.add_argument('--replay_file', help='File to use for recording or auditing', default='output')
 parser.add_argument('--flow', help='Name of the flow plugin module to use')
 parser.add_argument('--group', help='Name of the group plugin to use. Format = modulename.classname')
-parser.add_argument('--record_path_filter', help='Regex to filter request path on', default='\/')
+parser.add_argument('--record_uri_filter', help='Regex to filter request uri on', default='.*')
 parser.add_argument('--hosts', help='Domains used for sticky cookies', action='append')
 parser.add_argument('--record_content_type', help='Regex of path extensions to ignore', default='js|png|css|less|properties|html|ico')
 parser.add_argument('--cookie_mode', help='Specifies how the cookies will be created and used', choices=[AuditMaster.RecordedCookieMode,

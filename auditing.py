@@ -11,14 +11,14 @@ import xlsxwriter
 
 class RecordMaster(controller.Master):
 
-    def __init__(self, hosts, replay_file, record_path_filter, record_content_type):
+    def __init__(self, hosts, replay_file, record_uri_filter, record_content_type):
         self.hosts = hosts
         if not os.path.exists('output'):
             os.makedirs('output')
         replay_file = 'output/{0}'.format(replay_file)
         self.tmp_file = open(replay_file, 'wb')
         self.writer = flow.FlowWriter(self.tmp_file)
-        self.record_path_filter = record_path_filter
+        self.record_uri_filter = record_uri_filter
         self.record_content_type = record_content_type
 
         config = proxy.ProxyConfig(port=int(8080), http2=False)
@@ -26,11 +26,20 @@ class RecordMaster(controller.Master):
         print 'Listening on {0}'.format(server.address)
         super(RecordMaster, self).__init__(server)
 
+    @staticmethod
+    def is_host_match(hosts, host):
+        for h in hosts:
+            if re.search(h, host):
+                return True
+        return False
+
     def handle_response(self, f):
-        if self.hosts is None or f.request.host in self.hosts:
+        if RecordMaster.is_host_match(self.hosts, f.request.host):
             if 'strict-transport-security' in f.response.headers:
                 f.response.headers['strict-transport-security'] = 'max-age=0;'
             self.filter(f)
+        else:
+            print
         f.reply()
 
     def filter(self, f):
@@ -41,11 +50,11 @@ class RecordMaster(controller.Master):
             content_type = f.response.headers['content-type']
 
         if re.search(self.record_content_type, content_type) and \
-               re.search(self.record_path_filter, f.request.path):
-            print '\tRecording {0}'.format(f.request.path)
+               re.search(self.record_uri_filter, f.request.path):
+            print 'Recording {0} {1}, content-type = {2}'.format(f.request.host, f.request.path, content_type)
             self.writer.add(f)
         else:
-            print 'Ignoring {0}, content-type = {1}'.format(f.request.path, content_type)
+            print 'Ignoring {0} {1}, content-type = {2}'.format(f.request.host, f.request.path, content_type)
 
 
 class AuditMaster(dump.DumpMaster):
@@ -89,7 +98,7 @@ class AuditMaster(dump.DumpMaster):
             f.request.headers.pop('cookie')
 
         if self.cookie_mode == AuditMaster.RecordedCookieMode:
-            if f.request.host in self.hosts:
+            if self.host_match(f.request.host):
                 hid = (f.request.host, f.request.port)
                 if hid in self.cookies:
                     f.request.headers.set_all('Cookie', self.cookies[hid])
@@ -102,7 +111,7 @@ class AuditMaster(dump.DumpMaster):
 
     def handle_response(self, f):
         if self.cookie_mode == AuditMaster.RecordedCookieMode:
-            if f.request.host in self.hosts:
+            if RecordMaster.is_host_match(self.hosts, f.request.host):
                 hid = (f.request.host, f.request.port)
                 if 'set-cookie' in f.response.headers:
                     self.cookies[hid] = f.response.headers.get_all('set-cookie')
@@ -139,13 +148,14 @@ class AuditManager(object):
 
         def record(self):
             m = RecordMaster(self.options.hosts, self.options.replay_file,
-                             self.options.record_path_filter,
+                             self.options.record_uri_filter,
                              self.options.record_content_type)
 
             try:
-                print 'Filtering request URI with the regex {0}'.format(self.options.record_path_filter)
-                print 'Only accepting request/response based on content type matching the regex {0}'.format(self.options.record_content_type)
-                print 'Starting to record flows for the hosts {0}'.format(self.options.hosts)
+                print 'Only accepting requests that match the following criteria'
+                print 'URI matching the regex {0}'.format(self.options.record_uri_filter)
+                print 'Content type matching the regex {0}'.format(self.options.record_content_type)
+                print 'Hosts matching the array of regex {0}'.format(self.options.hosts)
                 m.run()
             except Exception as ex:
                 print 'Unexpected error has occurred: ', ex.args
@@ -242,10 +252,12 @@ class AuditManager(object):
                     try:
                         result_t = self.flow_plugin.format_result(match_result, match_result.report_col_name)
                         if result_t is not None:
-                            worksheet.write(row, col, result_t)
+                             worksheet.write(row, col, result_t)
                     except Exception as ex:
                         print 'Unexpected error formatting result: ', ex.args
                         continue
 
                 os.system('clear')
             workbook.close()
+
+
