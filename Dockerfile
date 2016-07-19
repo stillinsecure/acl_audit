@@ -21,11 +21,12 @@ RUN pip install configargparse \
   xlsxwriter
 
 # Copy source
-COPY *.py /src/
-COPY acl_audit.conf /src/
-COPY plugins/*.py /src/plugins/
+COPY *.py /opt/acl_audit/
+COPY acl_audit.conf /opt/acl_audit/
+COPY plugins/*.py /opt/acl_audit/plugins/
 
-# Mod filesystem
-RUN mkdir /src/output
-WORKDIR /src
-CMD ["python", "/src/acl_audit.py"]
+EXPOSE 8080
+
+VOLUME /opt/acl_audit/output
+WORKDIR /opt/acl_audit
+ENTRYPOINT ["python", "acl_audit.py"]
