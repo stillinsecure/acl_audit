@@ -37,12 +37,13 @@ class RecordMaster(controller.Master):
         if 'content-type' in f.response.headers:
             content_type = f.response.headers['content-type']
 
+        rec_output = '{0}, content-type = {1} -> {2} {3}'.format(f.request.host, content_type, f.request.method, f.request.path)
         if re.search(self.options.record_content_type, content_type) and \
                re.search(self.options.record_uri_filter, f.request.path):
-            print 'Recording {0} {1}, content-type = {2}'.format(f.request.host, f.request.path, content_type)
+            print 'Recording {0}'.format(rec_output)
             self.writer.add(f)
-        elif self.options.show_ignored == 'True':
-            print 'Ignoring {0} {1}, content-type = {2}'.format(f.request.host, f.request.path, content_type)
+        elif self.options.show_ignored == True:
+            print 'Ignoring {0}'.format(rec_output)
 
 
 class AuditMaster(dump.DumpMaster):

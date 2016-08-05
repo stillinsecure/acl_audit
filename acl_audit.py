@@ -4,7 +4,7 @@ from auditing import AuditManager, AuditMaster
 parser = configargparse.ArgParser(default_config_files=['acl_audit.conf'])
 
 parser.add_argument('--listen_port', help='Port that the proxy server will listen on when mode is set to record', default=8080)
-parser.add_argument('--show_ignored', help='Indicates if ignored requests are displayed', default=False)
+parser.add_argument('--show_ignored', help='Indicates if ignored requests are displayed', choices=[False, True], default=False      )
 parser.add_argument('--userid', help='The identifier of the user')
 parser.add_argument('--mode', help='Specify the mode for acl_audit', choices=['record', 'audit'], default='record')
 parser.add_argument('--replay_file', help='File to use for recording or auditing', default='output')
@@ -20,6 +20,7 @@ options = parser.parse_args()
 
 try:
     mgr = AuditManager(options)
+
     if options.mode == 'record':
         mgr.record()
     elif options.mode == 'audit':
